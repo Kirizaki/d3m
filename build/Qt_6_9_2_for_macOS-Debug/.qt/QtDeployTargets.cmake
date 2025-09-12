@@ -1,2 +1,0 @@
-set(__QT_DEPLOY_TARGET_QtImageOverlay_FILE /Users/greg/repo/qt_basics/qt_image_display_ROI/build/Qt_6_9_2_for_macOS-Debug/QtImageOverlay)
-set(__QT_DEPLOY_TARGET_QtImageOverlay_TYPE EXECUTABLE)

@@ -1,5 +1,0 @@
-/Users/greg/repo/qt_basics/qt_image_display_ROI/build/Qt_6_9_2_for_macOS-Debug/CMakeFiles/QtImageOverlay.dir
-/Users/greg/repo/qt_basics/qt_image_display_ROI/build/Qt_6_9_2_for_macOS-Debug/CMakeFiles/edit_cache.dir
-/Users/greg/repo/qt_basics/qt_image_display_ROI/build/Qt_6_9_2_for_macOS-Debug/CMakeFiles/rebuild_cache.dir
-/Users/greg/repo/qt_basics/qt_image_display_ROI/build/Qt_6_9_2_for_macOS-Debug/CMakeFiles/QtImageOverlay_autogen_timestamp_deps.dir
-/Users/greg/repo/qt_basics/qt_image_display_ROI/build/Qt_6_9_2_for_macOS-Debug/CMakeFiles/QtImageOverlay_autogen.dir
