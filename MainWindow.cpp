@@ -18,8 +18,11 @@
 #include <gdcmFileMetaInformation.h>
 #include <gdcmAttribute.h>
 
+int windowCenter = 40;  // just guessing
+int windowWidth = 400;  // just guessing
+
 // Helper: convert GDCM imate to QImage (grayscale)
-static QImage gdcmImageToQImage(const gdcm::Image& gimg) {
+static QImage gdcmImageToQImage(const gdcm::Image& gimg, int windowCenter, int windowWidth) {
     const unsigned int* dims = gimg.GetDimensions();
     int w = dims[0];
     int h = dims[1];
@@ -43,21 +46,38 @@ static QImage gdcmImageToQImage(const gdcm::Image& gimg) {
     } else if (bits == 16) {
         // rescale 16-git -> 8-bit
         const uint16_t* src = reinterpret_cast<uint16_t*>(buffer.data());
+
         uint16_t minVal = std::numeric_limits<uint16_t>::max();
         uint16_t maxVal = std::numeric_limits<uint16_t>::min();
-
         for (int i = 0; i < w*h; i++) {
             if (src[i] < minVal) minVal = src[i];
             if (src[i] > maxVal) maxVal = src[i];
         }
-        double range = (maxVal - minVal > 0) ? (maxVal - minVal) : 1.0;
+        
+        // if no WL specified -> auto fit
+        if (windowCenter < 0 || windowWidth < 0) {
+            windowCenter = (minVal + maxVal) / 2;
+            windowWidth = maxVal - minVal;
+        }
+
+        int wc = windowCenter;
+        int ww = windowWidth;
 
         for (int y = 0; y < h; ++y) {
             uchar* scan = img.scanLine(y);
             for (int x = 0; x < w; ++x) {
                 int idx = y*w + x;
-                double norm = (src[idx] - minVal) / range;
-                scan[x] = static_cast<uchar>(norm * 255.0);
+                int p = src[idx];
+
+                int minWin = wc - ww/2;
+                int maxWin = wc + ww/2;
+
+                if (p <= minWin)
+                    scan[x] = 0;
+                else if (p > maxWin)
+                    scan[x] = 255;
+                else
+                    scan[x] = (uchar)(((p - minWin) / (double)ww) * 255.0);
             }
         }
     } else {
@@ -65,7 +85,7 @@ static QImage gdcmImageToQImage(const gdcm::Image& gimg) {
         img.fill(Qt::black);
     }
 
-    return img.mirrored(false, true); // optional: flip vertically
+    return img.flipped(Qt::Orientation::Vertical);
 }
 
 // ---------------- ImageView implementation ----------------
@@ -189,6 +209,13 @@ QWidget* MainWindow::createToolBarWidget() {
     QPushButton* nextBtn = new QPushButton("Next");
     QPushButton* prevBtn = new QPushButton("Prev");
 
+    QSlider* wcSlider = new QSlider(Qt::Horizontal);
+    wcSlider->setRange(-1000, 3000);
+    wcSlider->setValue(windowCenter);
+    QSlider* wwSlider = new QSlider(Qt::Horizontal);
+    wwSlider->setRange(1, 4000);
+    wwSlider->setValue(windowWidth);
+
     h->addWidget(loadBaseBtn);
     h->addWidget(loadOverlayBtn);
     h->addWidget(opacityLabel);
@@ -200,6 +227,8 @@ QWidget* MainWindow::createToolBarWidget() {
     h->addWidget(loadSeriesBtn);
     h->addWidget(nextBtn);
     h->addWidget(prevBtn);
+    h->addWidget(wcSlider);
+    h->addWidget(wwSlider);
     h->addStretch();
 
     connect(loadBaseBtn, &QPushButton::clicked, this, &MainWindow::onLoadBase);
@@ -212,6 +241,8 @@ QWidget* MainWindow::createToolBarWidget() {
     connect(loadSeriesBtn, &QPushButton::clicked, this, &MainWindow::onLoadDicomSeries);
     connect(nextBtn, &QPushButton::clicked, this, &MainWindow::onNextSlice);
     connect(prevBtn, &QPushButton::clicked, this, &MainWindow::onPrevSlice);
+    connect(wcSlider, &QSlider::valueChanged, this, [=](int v){windowCenter = v; showSlice(currentSlice);});
+    connect(wwSlider, &QSlider::valueChanged, this, [=](int v) {windowWidth = v; showSlice(currentSlice);});
 
     return w;
 }
@@ -249,7 +280,7 @@ void MainWindow::showSlice(int index) {
     }
 
     gdcm::Image& gimg = reader.GetImage();
-    QImage qimg = gdcmImageToQImage(gimg);
+    QImage qimg = gdcmImageToQImage(gimg, windowCenter, windowWidth);
     m_view->loadBaseImage(qimg);
     m_view->fitInView(m_view->scene()->sceneRect(), Qt::KeepAspectRatio);
 
@@ -282,7 +313,7 @@ void MainWindow::onLoadDicom() {
     }
 
     gdcm::Image& gimg = reader.GetImage();
-    QImage qimg = gdcmImageToQImage(gimg);
+    QImage qimg = gdcmImageToQImage(gimg, windowCenter, windowWidth);
 
     if (qimg.isNull()) {
         statusBar()->showMessage("Failed to convert DICOM to QImage");
