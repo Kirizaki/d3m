@@ -1,0 +1,20 @@
+# ninja log v6
+1325	1430	1757628094791157343	QtImageOverlay	f3e7e0b36df554dd
+2	147	1757628167183665777	build.ninja	312987baa4bdd94b
+22	32	1757628093437469172	clean	72f0604381c45037
+4	394	1757628093850142306	QtImageOverlay_autogen/timestamp	489bc0fc09f7f7e0
+5	1210	1757628148871906749	CMakeFiles/QtImageOverlay.dir/MainWindow.cpp.o	f91d086ab48901a3
+4	394	1757628093850142306	/Users/greg/repo/qt_basics/qt_image_display_ROI/build/Qt_6_9_2_for_macOS-Debug/QtImageOverlay_autogen/mocs_compilation.cpp	489bc0fc09f7f7e0
+5	1047	1757628148871544699	CMakeFiles/QtImageOverlay.dir/main.cpp.o	999186155af8e63e
+4	394	1757628093850142306	QtImageOverlay_autogen/mocs_compilation.cpp	489bc0fc09f7f7e0
+4	394	1757628093850142306	/Users/greg/repo/qt_basics/qt_image_display_ROI/build/Qt_6_9_2_for_macOS-Debug/QtImageOverlay_autogen/timestamp	489bc0fc09f7f7e0
+395	1141	1757628093861341421	CMakeFiles/QtImageOverlay.dir/QtImageOverlay_autogen/mocs_compilation.cpp.o	c8409df65388c64c
+3	217	1757628167183665777	build.ninja	312987baa4bdd94b
+13	46	1757628167209039944	QtImageOverlay_autogen/timestamp	489bc0fc09f7f7e0
+13	46	1757628167209039944	QtImageOverlay_autogen/mocs_compilation.cpp	489bc0fc09f7f7e0
+13	46	1757628167209039944	/Users/greg/repo/qt_basics/qt_image_display_ROI/build/Qt_6_9_2_for_macOS-Debug/QtImageOverlay_autogen/timestamp	489bc0fc09f7f7e0
+13	46	1757628167209039944	/Users/greg/repo/qt_basics/qt_image_display_ROI/build/Qt_6_9_2_for_macOS-Debug/QtImageOverlay_autogen/mocs_compilation.cpp	489bc0fc09f7f7e0
+47	1097	1757628167243412886	CMakeFiles/QtImageOverlay.dir/main.cpp.o	e5e9c56ff85b7754
+47	1098	1757628167243254508	CMakeFiles/QtImageOverlay.dir/QtImageOverlay_autogen/mocs_compilation.cpp.o	c8409df65388c64c
+47	1284	1757628167243519472	CMakeFiles/QtImageOverlay.dir/MainWindow.cpp.o	227077ea7629a5f3
+1284	1405	1757628168480021723	QtImageOverlay	f3e7e0b36df554dd

@@ -1,0 +1,10 @@
+{
+    "C_Cpp.errorSquiggles": "enabled",
+    "cmake.configureSettings": {
+        "CMAKE_PREFIX_PATH": "/Users/greg/Qt/6.9.2/macos/lib/cmake/Qt6"
+    },
+    "files.associations": {
+        "qmouseevent": "cpp",
+        "limits": "cpp"
+    }
+}

@@ -1,0 +1,5 @@
+/Users/greg/repo/qt_basics/qt_image_display_ROI/build/CMakeFiles/QtImageOverlay.dir
+/Users/greg/repo/qt_basics/qt_image_display_ROI/build/CMakeFiles/edit_cache.dir
+/Users/greg/repo/qt_basics/qt_image_display_ROI/build/CMakeFiles/rebuild_cache.dir
+/Users/greg/repo/qt_basics/qt_image_display_ROI/build/CMakeFiles/QtImageOverlay_autogen_timestamp_deps.dir
+/Users/greg/repo/qt_basics/qt_image_display_ROI/build/CMakeFiles/QtImageOverlay_autogen.dir

@@ -1,0 +1,70 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/Users/greg/Qt/6.9.2/**",
+                "/Users/greg/Qt/6.9.2/macos/**",
+                "/Users/greg/Qt/6.9.2/macos/include/**",
+                "/Users/greg/Qt/6.9.2/macos/include",
+                "/Users/greg/Qt/6.9.2/macos/include/",
+                "/Users/greg/Qt/6.9.2/macos/lib",
+                "/Users/greg/Qt/6.9.2/macos/lib/",
+                "/Users/greg/Qt/6.9.2/macos/lib/**",
+                "/Users/greg/Qt/6.9.2/macos/bin",
+                "/Users/greg/Qt/6.9.2/macos/bin/",
+                "/Users/greg/Qt/6.9.2/macos/bin/**",
+                "/opt/homebrew/opt/gdcm/include/gdcm-3.2",
+                "/opt/homebrew/opt/gdcm/include/gdcm-3.2/",
+                "/opt/homebrew/opt/gdcm/include/gdcm-3.2/*",
+                "/opt/homebrew/opt/gdcm/include/gdcm-3.2/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/g++",
+            "cStandard": "c23",
+            "cppStandard": "c++26",
+            "intelliSenseMode": "macos-clang-arm64",
+            "compilerArgs": [
+                "-Wall -Werror -g"
+            ],
+            "forcedInclude": [
+                "\"/Users/greg/Qt/Qt Creator.app/Contents\"",
+                "\"/Users/greg/Qt/Qt Creator.app/Contents/doc\"",
+                "\"/Users/greg/Qt/Qt Creator.app/Contents/include\"",
+                "\"/Users/greg/Qt/Qt Creator.app/Contents/Frameworks\"",
+                "\"/Users/greg/Qt/Qt Creator.app/Contents/libexec\"",
+                "\"/Users/greg/Qt/Qt Creator.app/Contents/MacOS\"",
+                "\"/Users/greg/Qt/Qt Creator.app/Contents/PlugIns\"",
+                "\"/Users/greg/Qt/Qt Creator.app/Contents/Imports/qtquick2\"",
+                "\"/Users/greg/Qt/Qt Creator.app/Contents\"",
+                "\"/Users/greg/Qt/Qt Creator.app/Contents\"",
+                "\"/Users/greg/Qt/Qt Creator.app/Contents/translations\"",
+                "\"/Users/greg/Qt/Qt Creator.app/Contents/examples\"",
+                "\"/Users/greg/Qt/Qt Creator.app/Contents/tests\"",
+                "\"/Users/greg/Qt/Qt Creator.app/Contents\""
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/**",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/include/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/doc/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/include/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/Frameworks/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/libexec/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/MacOS/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/PlugIns/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/Imports/qtquick2/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/translations/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/examples/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/tests/**\"",
+                    "\"/Users/greg/Qt/Qt Creator.app/Contents/**\""
+                ]
+            }
+        }
+    ],
+    "version": 4
+}
