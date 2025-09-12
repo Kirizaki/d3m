@@ -11,12 +11,22 @@
 #include <QPen>
 #include <QBrush>
 #include <QToolBar>
+#include <QDockWidget>
+#include <QLineEdit>
 #include <gdcmImageReader.h>
 #include <gdcmImage.h>
 #include <gdcmPixelFormat.h>
 #include <gdcmDataElement.h>
 #include <gdcmFileMetaInformation.h>
 #include <gdcmAttribute.h>
+#include <gdcmReader.h>
+#include <gdcmDataSet.h>
+#include <gdcmStringFilter.h>
+#include <gdcmGlobal.h>
+#include <gdcmDicts.h>
+#include <gdcmDictEntry.h>
+#include <gdcmDict.h>
+#include <gdcmDictEntry.h>
 
 int windowCenter = 40;  // just guessing
 int windowWidth = 400;  // just guessing
@@ -182,6 +192,27 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     toolbar->addWidget(toolWidget);
     addToolBar(Qt::TopToolBarArea, toolbar);
 
+    // Search box
+    metaFilter = new QLineEdit();
+    metaFilter->setPlaceholderText("Search DICOM tags...");
+
+    // Tree widget
+    metaTree = new QTreeWidget();
+    metaTree->setColumnCount(2);
+    metaTree->setHeaderLabels(QStringList() << "Tag" << "Value");
+
+    // Layout inside dock
+    QWidget* metaWidget = new QWidget();
+    QVBoxLayout* vbox = new QVBoxLayout(metaWidget);
+    vbox->setContentsMargins(2,2,2,2);
+    vbox->addWidget(metaFilter);
+    vbox->addWidget(metaTree);
+
+    QDockWidget* dock = new QDockWidget("DICOM Metadata", this);
+    dock->setWidget(metaWidget);
+    addDockWidget(Qt::RightDockWidgetArea, dock);
+    connect(metaFilter, &QLineEdit::textChanged, this, &MainWindow::filterMetadata);
+
     statusBar()->showMessage("Ready");
 
     connect(m_view, &ImageView::roiFinished, this, &MainWindow::onROIFinished);
@@ -285,6 +316,7 @@ void MainWindow::showSlice(int index) {
     m_view->fitInView(m_view->scene()->sceneRect(), Qt::KeepAspectRatio);
 
     statusBar()->showMessage(QString("Slice %1 / %2").arg(index+1).arg(dicomFiles.size()));
+    loadDicomMetadata(dicomFiles[index]);
 }
 
 void MainWindow::onNextSlice() {
@@ -384,4 +416,50 @@ void MainWindow::onROIFinished(const QRectF& rect) {
     statusBar()->showMessage(QString("ROI: x=%1 y=%2 w=%3 h=%4")
                                  .arg(pixelRect.x()).arg(pixelRect.y())
                                  .arg(pixelRect.width()).arg(pixelRect.height()));
+}
+
+void MainWindow::loadDicomMetadata(const QString& file) {
+    metaTree->clear();
+
+    gdcm::Reader reader;
+    reader.SetFileName(file.toStdString().c_str());
+    if (!reader.Read()) return;
+
+    const gdcm::DataSet& ds = reader.GetFile().GetDataSet();
+    gdcm::StringFilter sf;
+    sf.SetFile(reader.GetFile());
+
+    const gdcm::Dicts& dicts = gdcm::Global::GetInstance().GetDicts();
+    const gdcm::Dict& pubDict = dicts.GetPublicDict();
+
+    for (gdcm::DataSet::ConstIterator it = ds.Begin(); it != ds.End(); ++it) {
+        const gdcm::DataElement& de = *it;
+        gdcm::Tag tag = de.GetTag();
+
+        QString tagStr = QString("(%1,%2)")
+            .arg(tag.GetGroup(), 4, 16, QLatin1Char('0'))
+            .arg(tag.GetElement(), 4, 16, QLatin1Char('0'))
+            .toUpper();
+        
+        QString value = QString::fromStdString(sf.ToString(de));
+
+        // lookup name in DICOM dictionary
+        const gdcm::DictEntry& entry = pubDict.GetDictEntry(tag);
+        QString keyword = QString::fromStdString(entry.GetKeyword());
+
+        QTreeWidgetItem* item = new QTreeWidgetItem(metaTree);
+        item->setText(0, tagStr + " " + keyword);
+        item->setText(1, value);
+    }
+
+    metaTree->expandAll();
+}
+
+void MainWindow::filterMetadata(const QString& text) {
+    for (int i = 0; i < metaTree->topLevelItemCount(); ++i) {
+        QTreeWidgetItem* item = metaTree->topLevelItem(i);
+        bool match = item->text(0).contains(text, Qt::CaseInsensitive) ||
+                     item->text(1).contains(text, Qt::CaseInsensitive);
+        item->setHidden(!match);
+    }
 }
