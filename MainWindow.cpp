@@ -199,7 +199,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // Tree widget
     metaTree = new QTreeWidget();
     metaTree->setColumnCount(2);
-    metaTree->setHeaderLabels(QStringList() << "Tag" << "Value");
+    metaTree->setHeaderLabels(QStringList() << "Tag" << "Value" << "VR");
 
     // Layout inside dock
     QWidget* metaWidget = new QWidget();
@@ -446,10 +446,13 @@ void MainWindow::loadDicomMetadata(const QString& file) {
         // lookup name in DICOM dictionary
         const gdcm::DictEntry& entry = pubDict.GetDictEntry(tag);
         QString keyword = QString::fromStdString(entry.GetKeyword());
+        gdcm::VR vr = entry.GetVR();
+        QString vrStr = QString::fromStdString(gdcm::VR::GetVRString(vr));
 
         QTreeWidgetItem* item = new QTreeWidgetItem(metaTree);
         item->setText(0, tagStr + " " + keyword);
         item->setText(1, value);
+        item->setText(2, vrStr);
     }
 
     metaTree->expandAll();
@@ -459,7 +462,8 @@ void MainWindow::filterMetadata(const QString& text) {
     for (int i = 0; i < metaTree->topLevelItemCount(); ++i) {
         QTreeWidgetItem* item = metaTree->topLevelItem(i);
         bool match = item->text(0).contains(text, Qt::CaseInsensitive) ||
-                     item->text(1).contains(text, Qt::CaseInsensitive);
+                     item->text(1).contains(text, Qt::CaseInsensitive) ||
+                     item->text(2).contains(text, Qt::CaseInsensitive);
         item->setHidden(!match);
     }
 }
