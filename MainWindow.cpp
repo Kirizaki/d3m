@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "DicomUtils.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -27,6 +28,24 @@
 #include <gdcmDictEntry.h>
 #include <gdcmDict.h>
 #include <gdcmDictEntry.h>
+#include <QStringList>
+#include <QDebug>
+
+double getNumericTag(const gdcm::File &f, const gdcm::DataSet& ds, uint16_t group, uint16_t element, int index = 0) {
+    gdcm::Tag tag(group, element);
+    if (!ds.FindDataElement(tag)) return 0.0;
+
+    gdcm::DataElement de = ds.GetDataElement(tag);
+    gdcm::StringFilter sf;
+    sf.SetFile(f);
+
+    QString value = QString::fromStdString(sf.ToString(de));
+    // DICOM often uses \ to sepearate numbers
+    QStringList parts = value.split('\\');
+    if (index < parts.size())
+        return parts[index].toDouble();
+    return 0.0;
+}
 
 int windowCenter = 40;  // just guessing
 int windowWidth = 400;  // just guessing
@@ -39,7 +58,6 @@ static QImage gdcmImageToQImage(const gdcm::Image& gimg, int windowCenter, int w
 
     gdcm::PixelFormat pf = gimg.GetPixelFormat();
     int bits = pf.GetBitsAllocated();       // e.g. 16/8
-    int samples = pf.GetSamplesPerPixel();  // usually 1 (grayscale), or 3 (RGB)
 
     std::vector<char> buffer(gimg.GetBufferLength());
     gimg.GetBuffer(buffer.data());
@@ -466,4 +484,32 @@ void MainWindow::filterMetadata(const QString& text) {
                      item->text(2).contains(text, Qt::CaseInsensitive);
         item->setHidden(!match);
     }
+}
+
+void MainWindow::extractSliceMetadata(const QString& file) {
+    gdcm::Reader reader;
+    reader.SetFileName(file.toStdString().c_str());
+    if (!reader.Read()) return;
+
+    const gdcm::File f = reader.GetFile();
+    const gdcm::DataSet& ds = f.GetDataSet();
+
+    double pixelSpacingX = getNumericTag(f, ds, d3m::PixelSpacing.group, d3m::PixelSpacing.element, 0);
+    double pixelSpacingY = getNumericTag(f, ds, d3m::PixelSpacing.group, d3m::PixelSpacing.element, 1);
+    double sliceThickness = getNumericTag(f, ds, d3m::SliceThickness.group, d3m::SliceThickness.element);
+    double imagePosX = getNumericTag(f, ds, d3m::ImagePositionPatient.group, d3m::ImagePositionPatient.element, 0);
+    double imagePosY = getNumericTag(f, ds, d3m::ImagePositionPatient.group, d3m::ImagePositionPatient.element, 1);
+    double imagePosZ = getNumericTag(f, ds, d3m::ImagePositionPatient.group, d3m::ImagePositionPatient.element, 2);
+    double rowCosX = getNumericTag(f, ds, d3m::ImageOrientationPatient.group, d3m::ImageOrientationPatient.element, 0);
+    double rowCosY = getNumericTag(f, ds, d3m::ImageOrientationPatient.group, d3m::ImageOrientationPatient.element, 1);
+    double rowCosZ = getNumericTag(f, ds, d3m::ImageOrientationPatient.group, d3m::ImageOrientationPatient.element, 2);
+    double colCosX = getNumericTag(f, ds, d3m::ImageOrientationPatient.group, d3m::ImageOrientationPatient.element, 3);
+    double colCosY = getNumericTag(f, ds, d3m::ImageOrientationPatient.group, d3m::ImageOrientationPatient.element, 4);
+    double colCosZ = getNumericTag(f, ds, d3m::ImageOrientationPatient.group, d3m::ImageOrientationPatient.element, 5);
+
+    QDebug(QtMsgType::QtInfoMsg) << "Pixel spacing: " << pixelSpacingX << pixelSpacingY;
+    QDebug(QtMsgType::QtInfoMsg) << "Pixel spacing: " << sliceThickness;
+    QDebug(QtMsgType::QtInfoMsg) << "Pixel spacing: " << imagePosX << imagePosY << imagePosZ;
+    QDebug(QtMsgType::QtInfoMsg) << "Pixel spacing: " << rowCosX << rowCosY << rowCosZ;
+    QDebug(QtMsgType::QtInfoMsg) << "Pixel spacing: " << colCosX << colCosY << colCosZ;
 }

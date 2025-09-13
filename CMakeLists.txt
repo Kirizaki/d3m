@@ -9,6 +9,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+set(DEBUG 1)
+
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 find_package(GDCM REQUIRED)
 
@@ -19,3 +21,10 @@ add_executable(QtImageOverlay
 )
 
 target_link_libraries(QtImageOverlay PRIVATE Qt6::Widgets gdcmMSFF)
+
+target_compile_options(QtImageOverlay PRIVATE
+    -Wall       # enable all warnings
+    -Wextra     # even more warnings
+    -Wpedantic  # strict ISO C++ conformance
+    -Werror     # treat warnings as errors
+)

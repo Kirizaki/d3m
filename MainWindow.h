@@ -63,4 +63,5 @@ private:
     QWidget* createToolBarWidget();
     void loadDicomMetadata(const QString& file);
     void filterMetadata(const QString& text);
+    void extractSliceMetadata(const QString& file);
 };

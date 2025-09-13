@@ -33,3 +33,5 @@
 
 # build artifacts
 /build
+*.pdf
+*.PDF
