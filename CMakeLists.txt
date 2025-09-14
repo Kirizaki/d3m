@@ -14,11 +14,11 @@ find_package(GDCM REQUIRED)
 
 add_executable(QtImageOverlay
     src/main.cpp
-    src/gui/MainWindow.cpp
-    src/gui/ImageView.cpp
-    include/gui/MainWindow.h
-    include/gui/ImageView.h
-    include/dicom/DicomUtils.h
+    src/gui/main_window.cpp
+    src/gui/image_view.cpp
+    include/gui/main_window.h
+    include/gui/image_view.h
+    include/dicom/dicom_utils.h
 )
 
 target_include_directories(QtImageOverlay PRIVATE

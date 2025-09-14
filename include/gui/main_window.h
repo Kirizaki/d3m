@@ -1,7 +1,7 @@
 #pragma once
 
-#include "dicom/DicomUtils.h"
-#include "gui/ImageView.h"
+#include "dicom/dicom_utils.h"
+#include "gui/image_view.h"
 
 #include <QMainWindow>
 #include <QGraphicsView>
