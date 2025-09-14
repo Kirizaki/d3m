@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DicomUtils.h"
+#include "dicom/DicomUtils.h"
 
 #include <QMainWindow>
 #include <QGraphicsView>

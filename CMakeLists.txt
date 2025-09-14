@@ -13,8 +13,16 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets)
 find_package(GDCM REQUIRED)
 
 add_executable(QtImageOverlay
-    main.cpp
-    MainWindow.cpp
+    src/main.cpp
+    src/gui/MainWindow.cpp
+    include/gui/MainWindow.h
+    include/dicom/DicomUtils.h
+)
+
+target_include_directories(QtImageOverlay PRIVATE
+    include
+    include/dicom
+    include/gui
 )
 
 target_link_libraries(QtImageOverlay PRIVATE Qt6::Widgets gdcmMSFF)

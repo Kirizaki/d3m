@@ -1,5 +1,5 @@
-#include "MainWindow.h"
-#include "DicomUtils.h"
+#include "gui/MainWindow.h"
+#include "dicom/DicomUtils.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QPushButton>
