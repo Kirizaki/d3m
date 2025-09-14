@@ -1,0 +1,8 @@
+Checks: >
+  modernize-*,
+  cppcoreguidelines-*,
+  bugprone-*,
+  performance-*,
+  readability-*
+WarningsAsErrors: '*'
+HeaderFilterRegex: 'src/.*'
