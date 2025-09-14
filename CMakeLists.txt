@@ -15,7 +15,9 @@ find_package(GDCM REQUIRED)
 add_executable(QtImageOverlay
     src/main.cpp
     src/gui/MainWindow.cpp
+    src/gui/ImageView.cpp
     include/gui/MainWindow.h
+    include/gui/ImageView.h
     include/dicom/DicomUtils.h
 )
 

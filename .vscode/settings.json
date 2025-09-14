@@ -63,6 +63,7 @@
         "set": "cpp",
         "unordered_set": "cpp",
         "qgraphicspixmapitem": "cpp",
-        "qgraphicsview": "cpp"
+        "qgraphicsview": "cpp",
+        "qgraphicsscene": "cpp"
     }
 }
