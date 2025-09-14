@@ -14,6 +14,10 @@
 #include <QToolBar>
 #include <QDockWidget>
 #include <QLineEdit>
+#include <QStringList>
+#include <QDebug>
+#include <QComboBox>
+
 #include <gdcmImageReader.h>
 #include <gdcmImage.h>
 #include <gdcmPixelFormat.h>
@@ -28,10 +32,14 @@
 #include <gdcmDictEntry.h>
 #include <gdcmDict.h>
 #include <gdcmDictEntry.h>
-#include <QStringList>
-#include <QDebug>
 
-double getNumericTag(const gdcm::File &f, const gdcm::DataSet& ds, uint16_t group, uint16_t element, int index = 0) {
+#include <optional>
+
+double getNumericTag(const gdcm::File& f,
+                     const gdcm::DataSet& ds,
+                     uint16_t group,
+                     uint16_t element,
+                     int index = 0) {
     gdcm::Tag tag(group, element);
     if (!ds.FindDataElement(tag)) return 0.0;
 
@@ -42,8 +50,12 @@ double getNumericTag(const gdcm::File &f, const gdcm::DataSet& ds, uint16_t grou
     QString value = QString::fromStdString(sf.ToString(de));
     // DICOM often uses \ to sepearate numbers
     QStringList parts = value.split('\\');
-    if (index < parts.size())
-        return parts[index].toDouble();
+    if (index < parts.size()) {
+        auto p = parts[index];
+        bool ok = false;
+        auto result = parts[index].toDouble(&ok);
+        if (ok) return result;
+    }
     return 0.0;
 }
 
@@ -226,14 +238,26 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     vbox->addWidget(metaFilter);
     vbox->addWidget(metaTree);
 
+    // Vertical Dock
     QDockWidget* dock = new QDockWidget("DICOM Metadata", this);
     dock->setWidget(metaWidget);
     addDockWidget(Qt::RightDockWidgetArea, dock);
+
+    // Combo Box for DICOM series selector
+    seriesCombo = new QComboBox(this);
+    toolbar->addWidget(seriesCombo);
+
     connect(metaFilter, &QLineEdit::textChanged, this, &MainWindow::filterMetadata);
+    connect(m_view, &ImageView::roiFinished, this, &MainWindow::onROIFinished);
+    connect(seriesCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index){
+        if (index < 0) return;
+        QString uid = seriesCombo->itemData(index).toString();
+        currentSeriesUID = uid;
+        currentSlice = 0;
+        showSlice(currentSlice);
+    });
 
     statusBar()->showMessage("Ready");
-
-    connect(m_view, &ImageView::roiFinished, this, &MainWindow::onROIFinished);
 }
 
 QWidget* MainWindow::createToolBarWidget() {
@@ -297,57 +321,119 @@ QWidget* MainWindow::createToolBarWidget() {
 }
 
 void MainWindow::onLoadDicomSeries() {
-    QString dirPath = QFileDialog::getExistingDirectory(this, "Select DICOM Series Folder");
+    // QString dirPath = QFileDialog::getExistingDirectory(this, "Select DICOM Series Folder");
+    auto dirPath = QString("/Users/greg/repo/mri/gk/");
     if (dirPath.isEmpty()) return;
 
-    // collect files
     QDir dir(dirPath);
     QStringList filters;
-    filters << "*.dcm" << "*.dicom" << "*"; // fallback
-    dicomFiles.clear();
-    for (const QFileInfo& fi : dir.entryInfoList(filters, QDir::Files)) {
-        dicomFiles.push_back(fi.absoluteFilePath());
+    filters << "*.dcm" << "*.dicom" << "*";
+    QStringList files = dir.entryList(filters, QDir::Files);
+    if (files.isEmpty()) return;
+
+    seriesMap.clear();
+
+    for (const QString& f : files) {
+        QString fullPath = dir.absoluteFilePath(f);
+
+        gdcm::ImageReader r;
+        r.SetFileName(fullPath.toStdString().c_str());
+        if (!r.Read()) continue;
+
+        gdcm::Image& gimg = r.GetImage();
+        QImage qimg = gdcmImageToQImage(gimg, windowCenter, windowWidth);
+
+        const gdcm::File& file = r.GetFile();
+        const gdcm::DataSet& ds = file.GetDataSet();
+
+        d3m::SliceInfo slice;
+        slice.image      = qimg;
+        slice.filePath   = fullPath;
+        slice.instanceNumber = (int)getNumericTag(file, ds, d3m::InstanceNumber.group, d3m::InstanceNumber.element);
+        slice.pixelSpacingX  = getNumericTag(file, ds, d3m::PixelSpacing.group, d3m::PixelSpacing.element, 0);
+        slice.pixelSpacingY  = getNumericTag(file, ds, d3m::PixelSpacing.group, d3m::PixelSpacing.element, 1);
+        slice.sliceThickness = getNumericTag(file, ds, d3m::SliceThickness.group, d3m::SliceThickness.element);
+        slice.imagePosX      = getNumericTag(file, ds, d3m::ImagePositionPatient.group, d3m::ImagePositionPatient.element, 0);
+        slice.imagePosY      = getNumericTag(file, ds, d3m::ImagePositionPatient.group, d3m::ImagePositionPatient.element, 1);
+        slice.imagePosZ      = getNumericTag(file, ds, d3m::ImagePositionPatient.group, d3m::ImagePositionPatient.element, 2);
+        slice.rowCosX        = getNumericTag(file, ds, d3m::ImageOrientationPatient.group, d3m::ImageOrientationPatient.element, 0);
+        slice.rowCosY        = getNumericTag(file, ds, d3m::ImageOrientationPatient.group, d3m::ImageOrientationPatient.element, 1);
+        slice.rowCosZ        = getNumericTag(file, ds, d3m::ImageOrientationPatient.group, d3m::ImageOrientationPatient.element, 2);
+        slice.colCosX        = getNumericTag(file, ds, d3m::ImageOrientationPatient.group, d3m::ImageOrientationPatient.element, 3);
+        slice.colCosY        = getNumericTag(file, ds, d3m::ImageOrientationPatient.group, d3m::ImageOrientationPatient.element, 4);
+        slice.colCosZ        = getNumericTag(file, ds, d3m::ImageOrientationPatient.group, d3m::ImageOrientationPatient.element, 5);
+
+        slice.sliceLocation = slice.imagePosZ; // fallback if instanceNumber missing
+
+        // Series UID
+        gdcm::Tag seriesUIDTag(d3m::SeriesInstanceUID.group, d3m::SeriesInstanceUID.element);
+        if (ds.FindDataElement(seriesUIDTag)) {
+            gdcm::DataElement de = ds.GetDataElement(seriesUIDTag);
+            gdcm::StringFilter sf;
+            sf.SetFile(file);
+            slice.seriesUID = QString::fromStdString(sf.ToString(de));
+        }
+
+        // Series Description (optional)
+        gdcm::Tag seriesDescTag(d3m::SeriesDesc.group, d3m::SeriesDesc.element);
+        if (ds.FindDataElement(seriesDescTag)) {
+            gdcm::DataElement de = ds.GetDataElement(seriesDescTag);
+            gdcm::StringFilter sf;
+            sf.SetFile(file);
+            slice.seriesDesc = QString::fromStdString(sf.ToString(de));
+        }
+
+        if (!slice.seriesUID.isEmpty()) {
+            seriesMap[slice.seriesUID].push_back(slice);
+        }
     }
 
-    if (dicomFiles.empty()) {
-        statusBar()->showMessage("No DICOM files found in folder");
-        return;
+    // Sort slices inside each series
+    for (auto& kv : seriesMap) {
+        auto& stack = kv.second;
+        std::sort(stack.begin(), stack.end(), [](const d3m::SliceInfo& a, const d3m::SliceInfo& b) {
+            if (a.instanceNumber > 0 && b.instanceNumber > 0)
+                return a.instanceNumber < b.instanceNumber;
+            return a.sliceLocation < b.sliceLocation;
+        });
     }
 
-    currentSlice = 0;
-    showSlice(currentSlice);
+    // Populate combo box
+    seriesCombo->clear();
+    for (const auto& kv : seriesMap) {
+        QString uid = kv.first;
+        QString desc = kv.second.front().seriesDesc.isEmpty() ? uid : kv.second.front().seriesDesc;
+        seriesCombo->addItem(desc, uid);
+    }
 }
 
-void MainWindow::showSlice(int index) {
-    if (index < 0 || index >= (int)dicomFiles.size()) return;
+bool MainWindow::showSlice(int index) {
+    auto it = seriesMap.find(currentSeriesUID);
+    if (it == seriesMap.end()) return false;
+    const auto& stack = it->second;
+    if (index < 0 || index >= (int)stack.size()) return false;
 
-    gdcm::ImageReader reader;
-    reader.SetFileName(dicomFiles[index].toStdString().c_str());
-    if (!reader.Read()) {
-        statusBar()->showMessage("Failed to read slice " + dicomFiles[index]);
-        return;
-    }
-
-    gdcm::Image& gimg = reader.GetImage();
-    QImage qimg = gdcmImageToQImage(gimg, windowCenter, windowWidth);
-    m_view->loadBaseImage(qimg);
+    const d3m::SliceInfo& slice = stack[index];
+    m_view->loadBaseImage(slice.image);
     m_view->fitInView(m_view->scene()->sceneRect(), Qt::KeepAspectRatio);
 
-    statusBar()->showMessage(QString("Slice %1 / %2").arg(index+1).arg(dicomFiles.size()));
-    loadDicomMetadata(dicomFiles[index]);
+    loadDicomMetadata(slice.filePath);
+    statusBar()->showMessage(QString("Series: %1 | Slice %2/%3").arg(slice.seriesDesc).arg(index+1).arg(stack.size()));
+
+    return true;
 }
 
 void MainWindow::onNextSlice() {
-    if (currentSlice + 1 < (int)dicomFiles.size()) {
-        currentSlice++;
-        showSlice(currentSlice);
-    }
+    currentSlice++;
+    if (!showSlice(currentSlice))
+        currentSlice--;
 }
 
 void MainWindow::onPrevSlice() {
     if (currentSlice > 0) {
         currentSlice--;
-        showSlice(currentSlice);
+        if (!showSlice(currentSlice))
+            currentSlice++;
     }
 }
 
@@ -491,7 +577,7 @@ void MainWindow::extractSliceMetadata(const QString& file) {
     reader.SetFileName(file.toStdString().c_str());
     if (!reader.Read()) return;
 
-    const gdcm::File f = reader.GetFile();
+    const gdcm::File& f = reader.GetFile();
     const gdcm::DataSet& ds = f.GetDataSet();
 
     double pixelSpacingX = getNumericTag(f, ds, d3m::PixelSpacing.group, d3m::PixelSpacing.element, 0);

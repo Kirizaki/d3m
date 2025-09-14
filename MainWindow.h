@@ -1,12 +1,16 @@
 #pragma once
 
+#include "DicomUtils.h"
+
 #include <QMainWindow>
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsRectItem>
-#include <vector>
 #include <QTreeWidget>
+#include <QComboBox>
+
+#include <vector>
 
 class ImageView : public QGraphicsView {
     Q_OBJECT
@@ -54,12 +58,15 @@ private slots:
     void onROIFinished(const QRectF& rect);
 
 private:
+    std::map<QString, std::vector<d3m::SliceInfo>> seriesMap;
     QLineEdit* metaFilter = nullptr;
     QTreeWidget* metaTree = nullptr;
     std::vector<QString> dicomFiles;
     int currentSlice = 0;
+    QString currentSeriesUID = 0;
     ImageView* m_view = nullptr;
-    void showSlice(int index);
+    QComboBox* seriesCombo = nullptr;
+    bool showSlice(int index);
     QWidget* createToolBarWidget();
     void loadDicomMetadata(const QString& file);
     void filterMetadata(const QString& text);
