@@ -58,6 +58,7 @@ private slots:
     void onROIFinished(const QRectF& rect);
 
 private:
+    QSlider* sliceSlider;
     std::map<QString, std::vector<d3m::SliceInfo>> seriesMap;
     QLineEdit* metaFilter = nullptr;
     QTreeWidget* metaTree = nullptr;

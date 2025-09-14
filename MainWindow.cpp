@@ -279,15 +279,19 @@ QWidget* MainWindow::createToolBarWidget() {
 
     QPushButton* loadDicomBtn = new QPushButton("Load DICOM");
     QPushButton* loadSeriesBtn = new QPushButton("Load DICOM Series");
-    QPushButton* nextBtn = new QPushButton("Next");
     QPushButton* prevBtn = new QPushButton("Prev");
+    QPushButton* nextBtn = new QPushButton("Next");
 
-    QSlider* wcSlider = new QSlider(Qt::Horizontal);
-    wcSlider->setRange(-1000, 3000);
-    wcSlider->setValue(windowCenter);
-    QSlider* wwSlider = new QSlider(Qt::Horizontal);
-    wwSlider->setRange(1, 4000);
-    wwSlider->setValue(windowWidth);
+    // QSlider* wcSlider = new QSlider(Qt::Horizontal);
+    // wcSlider->setRange(-1000, 3000);
+    // wcSlider->setValue(windowCenter);
+    // QSlider* wwSlider = new QSlider(Qt::Horizontal);
+    // wwSlider->setRange(1, 4000);
+    // wwSlider->setValue(windowWidth);
+
+    sliceSlider = new QSlider(Qt::Horizontal);
+    sliceSlider->setRange(0,0);
+    sliceSlider->setValue(0);
 
     h->addWidget(loadBaseBtn);
     h->addWidget(loadOverlayBtn);
@@ -298,10 +302,11 @@ QWidget* MainWindow::createToolBarWidget() {
     h->addWidget(clearRoiBtn);
     h->addWidget(loadDicomBtn);
     h->addWidget(loadSeriesBtn);
-    h->addWidget(nextBtn);
     h->addWidget(prevBtn);
-    h->addWidget(wcSlider);
-    h->addWidget(wwSlider);
+    h->addWidget(nextBtn);
+    // h->addWidget(wcSlider);
+    // h->addWidget(wwSlider);
+    h->addWidget(sliceSlider);
     h->addStretch();
 
     connect(loadBaseBtn, &QPushButton::clicked, this, &MainWindow::onLoadBase);
@@ -314,8 +319,9 @@ QWidget* MainWindow::createToolBarWidget() {
     connect(loadSeriesBtn, &QPushButton::clicked, this, &MainWindow::onLoadDicomSeries);
     connect(nextBtn, &QPushButton::clicked, this, &MainWindow::onNextSlice);
     connect(prevBtn, &QPushButton::clicked, this, &MainWindow::onPrevSlice);
-    connect(wcSlider, &QSlider::valueChanged, this, [=](int v){windowCenter = v; showSlice(currentSlice);});
-    connect(wwSlider, &QSlider::valueChanged, this, [=](int v) {windowWidth = v; showSlice(currentSlice);});
+    // connect(wcSlider, &QSlider::valueChanged, this, [=](int v){windowCenter = v; showSlice(currentSlice);});
+    // connect(wwSlider, &QSlider::valueChanged, this, [=](int v) {windowWidth = v; showSlice(currentSlice);});
+    connect(sliceSlider, &QSlider::valueChanged, this, [this](int v) {showSlice(v);});
 
     return w;
 }
@@ -411,15 +417,25 @@ bool MainWindow::showSlice(int index) {
     auto it = seriesMap.find(currentSeriesUID);
     if (it == seriesMap.end()) return false;
     const auto& stack = it->second;
-    if (index < 0 || index >= (int)stack.size()) return false;
+    if (stack.empty()) return false;
+
+    int maxIndex = static_cast<int>(stack.size()) - 1;
+    if (index < 0) index = 0;
+    if (index > maxIndex) index = maxIndex;
+    currentSlice = index;
+
+    sliceSlider->setRange(0, maxIndex);
+    sliceSlider->setValue(index);
 
     const d3m::SliceInfo& slice = stack[index];
     m_view->loadBaseImage(slice.image);
     m_view->fitInView(m_view->scene()->sceneRect(), Qt::KeepAspectRatio);
 
     loadDicomMetadata(slice.filePath);
-    statusBar()->showMessage(QString("Series: %1 | Slice %2/%3").arg(slice.seriesDesc).arg(index+1).arg(stack.size()));
 
+    statusBar()->showMessage(QString("Series: %1 | Slice %2 / %3")
+        .arg(slice.seriesDesc.isEmpty() ? "Unknown" : slice.seriesDesc)
+        .arg(index+1).arg(stack.size()));
     return true;
 }
 
