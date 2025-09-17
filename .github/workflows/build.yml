@@ -1,0 +1,60 @@
+name: Build Qt 6 C++ App
+
+on:
+  workflow_dispatch:  # Allows manual triggering via GitHub UI
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Qt 6
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'  # Specify the Qt 6 version you want to use
+
+      - name: Install build dependencies
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y cmake build-essential
+          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            choco install cmake -y
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            brew install cmake
+          fi
+
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Bundle Qt libraries
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            EXE=$(ls build/Release/*.exe | head -n 1)
+            "$Env:Qt6Dir\bin\windeployqt.exe" "$EXE"
+          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            EXE=$(ls build/* | grep -v "\." | head -n 1)
+            ./linuxdeployqt-continuous-x86_64.AppImage "$EXE" -appimage
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            EXE=$(ls build/* | grep -v "\." | head -n 1)
+            macdeployqt "$EXE" -dmg
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: my-app-${{ matrix.os }}
+          path: |
+            build/Release/*
+            build/*.AppImage
+            build/*.dmg
+            
